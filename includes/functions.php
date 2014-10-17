@@ -48,6 +48,7 @@
         {
             // Select the database to use
             $mysql['database'] = mysqli_select_db($mysql['connection'], DB_NAME) or error(__FILE__, __LINE__, mysqli_error($mysql['connection']));
+            $mysql['db_prefix'] = DB_PREFIX;
 
             // Database does not exist
             if (!$mysql['database'])
@@ -79,26 +80,30 @@
         db_connect();
 
         // Find all categories
-        $result = mysqli_query($mysql['connection'], "SELECT * FROM test_categories");
+        $result = mysqli_query($mysql['connection'], "SELECT * FROM {$mysql['db_prefix']}categories");
 
         // Database has categories
         while ($row = mysqli_fetch_array($result))
         {
-            $category = new Category($row['title'], $row['description']);
+            $category = new Category($row['category_title'], $row['category_description']);
             $portfolio->addCategory($category);
         }
 
         // Find all projects
-        $result = mysqli_query($mysql['connection'], "SELECT * FROM test_projects");
+        $result = mysqli_query($mysql['connection'], "SELECT * FROM {$mysql['db_prefix']}projects");
 
         // Database has projects
         while ($row = mysqli_fetch_array($result))
         {
-            $title = $row['title'];
-            $description = $row['description'];
-            $category_title = $row['category'];
+            $title = $row['project_title'];
+            $description = $row['project_description'];
+            $category_title = $row['project_category'];
+            $link = $row['project_link'];
+            $thumbnail = $row['project_thumbnail'];
 
             $project = new Project($title, $description);
+            $project->setLink($link);
+            $project->setThumbnail($thumbnail);
 
             $portfolio->addProject($project);
 
@@ -112,7 +117,7 @@
         }
 
         // Close connection
-        db_close();
+        //db_close();
     }
 
     /**
@@ -126,7 +131,7 @@
 
         db_connect();
 
-        $result = mysqli_query($mysql['connection'], "SELECT $option FROM test_info");
+        $result = mysqli_query($mysql['connection'], "SELECT $option FROM {$mysql['db_prefix']}options");
 
         while ($row = mysqli_fetch_array($result))
         {
@@ -134,6 +139,106 @@
         }
 
         db_close();
+    }
+
+    /**
+     * Displays all projects on the page.
+     */
+    function display_all_projects()
+    {
+        global $portfolio;
+
+        echo "<div id='portfolio'>";
+
+        // Display each project
+        foreach ($portfolio->getProjects() as $project)
+        {
+            echo "<div class='project-container'><a href='?project={$project->getTitle()}'><div class='project'>
+                    <div class='project-title'>{$project->getTitle()}</div>
+                </div></a></div>";
+        }
+
+        echo "</div>";
+    }
+
+    /**
+     * Returns all projects of a certain category on the page.
+     * @param string $category category title
+     * @return array
+     */
+    function get_projects_in_category($category)
+    {
+        global $portfolio;
+
+        $projects = array();
+
+        foreach ($category->getProjects() as $project)
+        {
+            array_push($projects, $project);
+        }
+
+        return $projects;
+    }
+
+    function display_project($project)
+    {
+        global $portfolio;
+
+        $project = $portfolio->getProjectByTitle($project);
+        $external_link = $project->getLink('external');
+
+        echo "<div class='project'>
+            <div class='thumbnail-wide' style='background:url(/images/thumbs/{$project->getThumbnail()}) center no-repeat; background-size: cover'>
+                <div class='thumbnail-overlay' style='background:url(/images/thumbs/overlay.png) center; background-size: contain'>
+                    <div class='container'><div class='project-title'><a href='./?project={$project->getTitle()}'>{$project->getTitle()}</a></div></div>
+                </div>
+            </div>
+            <div class='container'>
+                <div class='project-content'>
+                    {$project->getDescription()}
+                    <p>External Link: <a href='$external_link'>$external_link</a></p>
+                </div>
+            </div>";
+
+        echo "</div>";
+    }
+
+    function add_project($title, $description, $category, $link, $thumbnail)
+    {
+        global $mysql;
+
+        db_connect();
+
+        $query = "INSERT INTO " . DB_PREFIX . "projects (project_title, project_description, project_category, project_link, project_thumbnail) VALUES ('$title', '$description', '$category', '$link', '$thumbnail')";
+        $result = mysqli_query($mysql['connection'], $query);
+
+        // Return whether project was successfully added or not
+        return $result;
+    }
+
+    function db_delete_category($title)
+    {
+        global $mysql;
+        global $porfolio;
+
+        db_connect();
+
+    $category_projects =    get_projects_in_category($portfolio->getCategoryByTitle($title)->getProjects());
+
+        foreach ($category_projects as $project)
+        {
+            $query = "UPDATE {$mysql['db_prefix']}projects SET project_category='Uncategorized' WHERE project_category='$title'";
+            mysqli_query($mysql['connection'], $query);
+        }
+
+        $query = "DELETE FROM {$mysql['db_prefix']}categories WHERE category_title='$title'";
+
+        $result = mysqli_query($mysql['connection'], $query);
+
+        if (!$result)
+        {
+            echo "Error: " . mysqli_error($mysql['connection']);
+        }
     }
 
 ?>

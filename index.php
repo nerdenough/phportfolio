@@ -1,5 +1,11 @@
 <?php
 
+    // Redirect to install location if it exists
+    if (is_dir('./install'))
+    {
+        header('Location: ./install');
+    }
+
     // Require core files
     require_once 'includes/config.php';
     require_once 'includes/functions.php';
@@ -23,14 +29,34 @@
         echo "<p>Could not locate header.php!</p>";
     }
 
-    // Include content file
-    if (file_exists(get_option('theme_path') . 'content.php'))
+    // No project or category specified
+    if (isset($_GET['project']) || isset($_GET['category']))
     {
-        include get_option('theme_path') . 'content.php';
+        // Project is specified
+        if(isset($_GET['project']))
+        {
+            display_project($_GET['project']);
+        }
+        // Category is specified
+        else if (isset($_GET['category']))
+        {
+            display_projects_in_category($portfolio->getCategoryByTitle($_GET['category']));
+        }
+    }
+    // No project or category is specified
+    else
+    {
+        display_all_projects();
+    }
+
+    // Include header file
+    if (file_exists(get_option('theme_path') . 'footer.php'))
+    {
+        include get_option('theme_path') . 'footer.php';
     }
     else
     {
-        echo "<p>Could not locate content.php!</p>";
+        echo "<p>Could not locate footer.php!</p>";
     }
 
 ?>

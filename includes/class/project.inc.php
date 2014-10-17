@@ -12,16 +12,13 @@
         private $_title;
         private $_description;
         private $_category;
-        private $_links;
-        private $_images;
+        private $_link;
+        private $_thumbnail;
 
         public function __construct($title, $description)
         {
             $this->_title = $title;
             $this->_description = $description;
-            $this->_category = "Uncategorized";
-            $this->_links = array();
-            $this->_images = array();
         }
 
         public function getTitle()
@@ -48,6 +45,26 @@
             {
                 $category->addProject($this);
             }
+        }
+
+        public function getLink()
+        {
+            return $this->_link;
+        }
+
+        public function setLink($link)
+        {
+            $this->_link = $link;
+        }
+
+        public function getThumbnail()
+        {
+            return $this->_thumbnail;
+        }
+
+        public function setThumbnail($thumbnail)
+        {
+            $this->_thumbnail = $thumbnail;
         }
     }
 

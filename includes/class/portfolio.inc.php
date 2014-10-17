@@ -91,6 +91,17 @@
             // Return projects by newest
             return array_reverse($this->_projects);
         }
+
+        public function getProjectByTitle($title)
+        {
+            foreach ($this->_projects as $project)
+            {
+                if ($project->getTitle() === $title)
+                {
+                    return $project;
+                }
+            }
+        }
     }
 
 ?>
